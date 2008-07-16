@@ -104,7 +104,7 @@ class URxvt : Gtk.Socket {
 
         // should use safer routines
         // and look up shell
-        var cmd = "urxvt -embed 0x%x -pe -tabbed -e /bin/zsh".printf(id);
+        var cmd = "urxvtc -embed 0x%x -pe -tabbed -e /bin/zsh".printf(id);
         try {
             Process.spawn_command_line_async(cmd);
         }
