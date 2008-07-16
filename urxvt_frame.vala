@@ -4,7 +4,6 @@
  * open new tab in cwd of current tab
  * tab titles
  * activity monitoring
- * pause paste
  * get rid of blinking (notebook black background?)
  * some configurability
  */
@@ -141,24 +140,62 @@ class URxvt : Gtk.Socket {
     const uint Key_Pause = 0xff13;
     const uint Key_T = 0x054;
     const uint Key_t = 0x074;
+    const uint Key_Insert = 0xff63;
     const uint Mod_Ctrl_Shift = Gdk.ModifierType.CONTROL_MASK
                               | Gdk.ModifierType.SHIFT_MASK;
 
+    // Hack. I don't know if this is portable.
+    const ushort Hw_Insert = 0x6a;
+
     bool key_press_event_hook(URxvt me, Gdk.EventKey evt) {
-        // stdout.printf("keyval = %x, state = %x\n", evt.keyval, evt.state);
+        // Debugging.
+        if (false) {
+            stdout.printf(
+                "keyval = %x, hw = %x, state = %x, length = %d, str = %s\n",
+                evt.keyval,
+                evt.hardware_keycode,
+                evt.state,
+                evt.length,
+                evt.str
+            );
+        }
+
         switch (evt.state) {
+            case 0:
+                if (evt.keyval == Key_Pause) {
+                    synth_shift_insert();
+                    return true;
+                }
+                return false;
+
             case Mod_Ctrl_Shift:
                 return this.key_press_ctrl_shift(evt);
+
             case Gdk.ModifierType.SHIFT_MASK:
                 return this.key_press_shift(evt);
+
             case Gdk.ModifierType.MOD1_MASK:
                 return this.key_press_mod1(evt);
         }
-        if (evt.keyval == Key_Pause) {
-            // XXX how to send Shift-Insert to urxvt?
-            return true;
-        }
+
         return false;
+    }
+
+    void synth_shift_insert() {
+        var evt = Gdk.EventKey();
+        evt.type = Gdk.EventType.KEY_PRESS;
+        evt.window = this.window;
+        evt.state = Gdk.ModifierType.SHIFT_MASK;
+        evt.hardware_keycode = Hw_Insert;
+
+        evt.keyval = Key_Insert;
+        evt.length = 0;
+        evt.str = "";
+
+        evt.send_event = 0;
+        evt.time = Gdk.CURRENT_TIME;
+
+        Gtk.main_do_event((Gdk.Event) evt);
     }
 
     bool key_press_ctrl_shift(Gdk.EventKey evt) {
