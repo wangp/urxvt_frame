@@ -35,11 +35,11 @@ class UNotebook : Gtk.Notebook {
     construct {
         //this.can_focus = false;
         this.scrollable = true;
-        this.page_removed += this.page_removed_hook;
+        this.page_removed += this.on_page_removed;
         this.new_terminal();
     }
 
-    void page_removed_hook() {
+    void on_page_removed() {
         if (this.get_n_pages() == 0) {
             Gtk.main_quit();
         }
@@ -86,10 +86,10 @@ class URxvt : Gtk.Socket {
         this.can_focus = true;
         this.border_width = 0;
 
-        this.realize += realize_hook;
-        this.plug_added += plug_added_hook;
-        this.map_event += map_event_hook;
-        this.key_press_event += key_press_event_hook;
+        this.realize += on_realize;
+        this.plug_added += on_plug_added;
+        this.map_event += on_map_event;
+        this.key_press_event += on_key_press_event;
     }
 
     public UNotebook parent_notebook {
@@ -97,7 +97,7 @@ class URxvt : Gtk.Socket {
         construct set;
     }
 
-    void realize_hook() {
+    void on_realize() {
         // XXX this shouldn't be a pointer
         weak Gdk.NativeWindow id = this.get_id();
 
@@ -112,11 +112,11 @@ class URxvt : Gtk.Socket {
         }
     }
 
-    void plug_added_hook() {
+    void on_plug_added() {
         // stdout.printf("plug_added\n");
     }
 
-    bool map_event_hook() {
+    bool on_map_event() {
         // stdout.printf("map_event\n");
         // Will be called when the tab is switched-to.
         this.grab_focus();
@@ -147,7 +147,7 @@ class URxvt : Gtk.Socket {
     // Hack. I don't know if this is portable.
     const ushort Hw_Insert = 0x6a;
 
-    bool key_press_event_hook(URxvt me, Gdk.EventKey evt) {
+    bool on_key_press_event(URxvt me, Gdk.EventKey evt) {
         // Debugging.
         if (false) {
             stdout.printf(
