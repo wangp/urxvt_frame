@@ -86,6 +86,11 @@ class URxvt : Gtk.Socket {
         this.can_focus = true;
         this.border_width = 0;
 
+        // Reduce the initial flicker when the terminal starts up.  Of course,
+        // this assumes the terminal background colour is black.
+        Gdk.Color black = { 0, 0, 0, 0 };
+        this.modify_bg(Gtk.StateType.NORMAL, black);
+
         this.realize += on_realize;
         this.plug_added += on_plug_added;
         this.map_event += on_map_event;
