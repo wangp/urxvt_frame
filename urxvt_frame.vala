@@ -33,7 +33,7 @@ class UFrame : Gtk.Window {
 class UNotebook : Gtk.Notebook {
 
     construct {
-        //this.can_focus = false;
+        this.can_focus = false;
         this.scrollable = true;
         this.page_removed += this.on_page_removed;
         this.new_terminal();
