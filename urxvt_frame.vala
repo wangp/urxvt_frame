@@ -10,6 +10,7 @@
 
 using GLib;
 using Gtk;
+using Gdkk;
 
 int main(string[] argv) {
     if (!Options.load_options()) {
@@ -153,25 +154,6 @@ class URxvt : Gtk.Socket {
         return false;
     }
 
-    // The Vala bindings do not yet include Gdk keysyms.
-    const uint Key_0 = 0x030;
-    const uint Key_1 = 0x031;
-    const uint Key_2 = 0x032;
-    const uint Key_3 = 0x033;
-    const uint Key_4 = 0x034;
-    const uint Key_5 = 0x035;
-    const uint Key_6 = 0x036;
-    const uint Key_7 = 0x037;
-    const uint Key_8 = 0x038;
-    const uint Key_9 = 0x039;
-    const uint Key_Left = 0xff51;
-    const uint Key_Right = 0xff53;
-    const uint Key_Down = 0xff54;
-    const uint Key_Pause = 0xff13;
-    const uint Key_N = 0x04e;
-    const uint Key_T = 0x054;
-    const uint Key_t = 0x074;
-    const uint Key_Insert = 0xff63;
     const uint Mod_Ctrl_Shift = Gdk.ModifierType.CONTROL_MASK
                               | Gdk.ModifierType.SHIFT_MASK;
 
@@ -194,7 +176,7 @@ class URxvt : Gtk.Socket {
         switch (evt.state) {
             case 0:
                 if (Options.pause_paste) {
-                    if (evt.keyval == Key_Pause) {
+                    if (evt.keyval == Keysyms.Pause) {
                         synth_shift_insert();
                         return true;
                     }
@@ -203,6 +185,9 @@ class URxvt : Gtk.Socket {
 
             case Mod_Ctrl_Shift:
                 return this.key_press_ctrl_shift(evt);
+
+            case Gdk.ModifierType.CONTROL_MASK:
+                return this.key_press_ctrl(evt);
 
             case Gdk.ModifierType.SHIFT_MASK:
                 return this.key_press_shift(evt);
@@ -221,7 +206,7 @@ class URxvt : Gtk.Socket {
         evt.state = Gdk.ModifierType.SHIFT_MASK;
         evt.hardware_keycode = Hw_Insert;
 
-        evt.keyval = Key_Insert;
+        evt.keyval = Keysyms.Insert;
         evt.length = 0;
         evt.str = "";
 
@@ -232,26 +217,38 @@ class URxvt : Gtk.Socket {
     }
 
     bool key_press_ctrl_shift(Gdk.EventKey evt) {
-        if (evt.keyval == Key_T) {
-            this.parent_notebook.new_terminal();
-            return true;
+        switch (evt.keyval) {
+            case Keysyms.T:
+                this.parent_notebook.new_terminal();
+                return true;
+            case Keysyms.N:
+                new_notebook();
+                return true;
         }
-        if (evt.keyval == Key_N) {
-            new_notebook();
-            return true;
+        return false;
+    }
+
+    bool key_press_ctrl(Gdk.EventKey evt) {
+        switch (evt.keyval) {
+            case Keysyms.Page_Up:
+                this.parent_notebook.previous_page();
+                return true;
+            case Keysyms.Page_Down:
+                this.parent_notebook.next_page();
+                return true;
         }
         return false;
     }
 
     bool key_press_shift(Gdk.EventKey evt) {
         switch (evt.keyval) {
-            case Key_Left:
+            case Keysyms.Left:
                 this.parent_notebook.previous_page();
                 return true;
-            case Key_Right:
+            case Keysyms.Right:
                 this.parent_notebook.next_page();
                 return true;
-            case Key_Down:
+            case Keysyms.Down:
                 this.parent_notebook.new_terminal();
                 return true;
         }
@@ -259,11 +256,14 @@ class URxvt : Gtk.Socket {
     }
 
     bool key_press_mod1(Gdk.EventKey evt) {
-        if (evt.keyval >= Key_1 && evt.keyval <= Key_9) {
-            this.parent_notebook.select_page((int)evt.keyval - (int)Key_1);
+        if (evt.keyval >= (uint) Digits._1 && 
+            evt.keyval <= (uint) Digits._9)
+        {
+            var n = (int) evt.keyval - (int) Digits._1;
+            this.parent_notebook.select_page(n);
             return true;
         }
-        if (evt.keyval == Key_0) {
+        if (evt.keyval == Digits._0) {
             this.parent_notebook.select_page(9);
             return true;
         }
