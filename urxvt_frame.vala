@@ -1,7 +1,6 @@
 /*
  * TODO
  *
- * handle window close button cleanly
  * open new tab in cwd of current tab
  * tab titles
  * activity monitoring
@@ -29,24 +28,15 @@ class UFrame : Gtk.Window {
 
     static List<UFrame> all_frames;
 
-    UNotebook notebook;
-
     construct {
         this.title = "urxvt-frame";
 
-        this.notebook = new UNotebook();
-        this.add(this.notebook);
+        var notebook = new UNotebook();
+        this.add(notebook);
 
-        this.notebook.page_removed += this.on_page_removed;
         this.destroy += this.on_destroy;
 
         all_frames.append(this);
-    }
-
-    void on_page_removed() {
-        if (notebook.get_n_pages() == 0) {
-            this.destroy();
-        }
     }
 
     void on_destroy() {
@@ -62,7 +52,18 @@ class UNotebook : Gtk.Notebook {
     construct {
         this.can_focus = false;
         this.scrollable = true;
+        this.page_removed += this.on_page_removed;
+
         this.new_terminal();
+    }
+
+    void on_page_removed() {
+        if (this.get_n_pages() == 0) {
+            // This can happen in the case of closing the window.
+            if (this.parent != null) {
+                this.parent.destroy();
+            }
+        }
     }
 
     public void new_terminal() {
