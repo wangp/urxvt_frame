@@ -1,2 +1,4 @@
-urxvt_frame: urxvt_frame.vala
-	valac urxvt_frame.vala --pkg gtk+-2.0
+SRCS := urxvt_frame.vala options.vala
+
+urxvt_frame: $(SRCS)
+	valac $(SRCS) --pkg gtk+-2.0

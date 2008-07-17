@@ -5,17 +5,21 @@
  * tab titles
  * activity monitoring
  * get rid of blinking (notebook black background?)
- * some configurability
  * close tab button? (for forceful kill)
  */
 
 using GLib;
 using Gtk;
 
-void main(string[] argv) {
+int main(string[] argv) {
+    if (!Options.load_options()) {
+        return 1;
+    }
+
     Gtk.init(ref argv);
     new_notebook();
     Gtk.main();
+    return 0;
 }
 
 void new_notebook() {
@@ -125,14 +129,16 @@ class URxvt : Gtk.Socket {
         // XXX this shouldn't be a pointer
         weak Gdk.NativeWindow id = this.get_id();
 
-        // should use safer routines
-        // and look up shell
-        var cmd = "urxvtc -embed 0x%lx -pe -tabbed -e /bin/zsh".printf((ulong) id);
+        // The order of arguments matters.
+        var embed = " -embed 0x%lx".printf((ulong) id);
+        var cmd = Options.command + embed + " -e /bin/zsh";
+
         try {
+            // should use safer routines
             Process.spawn_command_line_async(cmd);
         }
         catch (SpawnError e) {
-            // do something
+            stderr.printf("Error running `%s'.\n", cmd);
         }
     }
 
@@ -187,9 +193,11 @@ class URxvt : Gtk.Socket {
 
         switch (evt.state) {
             case 0:
-                if (evt.keyval == Key_Pause) {
-                    synth_shift_insert();
-                    return true;
+                if (Options.pause_paste) {
+                    if (evt.keyval == Key_Pause) {
+                        synth_shift_insert();
+                        return true;
+                    }
                 }
                 return false;
 

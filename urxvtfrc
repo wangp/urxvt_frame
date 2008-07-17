@@ -1,0 +1,7 @@
+[urxvtf]
+
+# How to execute urxvt.
+command = /usr/bin/urxvtc -pe -tabbed
+
+# If true, send Shift-Insert when Pause is pressed.
+pause_paste = true
