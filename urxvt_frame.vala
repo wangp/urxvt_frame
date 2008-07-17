@@ -1,11 +1,13 @@
 /*
  * TODO
  *
+ * handle window close button cleanly
  * open new tab in cwd of current tab
  * tab titles
  * activity monitoring
  * get rid of blinking (notebook black background?)
  * some configurability
+ * close tab button? (for forceful kill)
  */
 
 using GLib;
@@ -13,20 +15,45 @@ using Gtk;
 
 void main(string[] argv) {
     Gtk.init(ref argv);
+    new_notebook();
+    Gtk.main();
+}
+
+void new_notebook() {
     var window = new UFrame();
     window.set_default_size(700, 400);
     window.show_all();
-    Gtk.main();
 }
 
 class UFrame : Gtk.Window {
 
+    static List<UFrame> all_frames;
+
+    UNotebook notebook;
+
     construct {
         this.title = "urxvt-frame";
-        this.destroy += Gtk.main_quit;
 
-        var notebook = new UNotebook();
-        this.add(notebook);
+        this.notebook = new UNotebook();
+        this.add(this.notebook);
+
+        this.notebook.page_removed += this.on_page_removed;
+        this.destroy += this.on_destroy;
+
+        all_frames.append(this);
+    }
+
+    void on_page_removed() {
+        if (notebook.get_n_pages() == 0) {
+            this.destroy();
+        }
+    }
+
+    void on_destroy() {
+        all_frames.remove(this);
+        if (all_frames.length() == 0) {
+            Gtk.main_quit();
+        }
     }
 }
 
@@ -35,14 +62,7 @@ class UNotebook : Gtk.Notebook {
     construct {
         this.can_focus = false;
         this.scrollable = true;
-        this.page_removed += this.on_page_removed;
         this.new_terminal();
-    }
-
-    void on_page_removed() {
-        if (this.get_n_pages() == 0) {
-            Gtk.main_quit();
-        }
     }
 
     public void new_terminal() {
@@ -143,6 +163,7 @@ class URxvt : Gtk.Socket {
     const uint Key_Right = 0xff53;
     const uint Key_Down = 0xff54;
     const uint Key_Pause = 0xff13;
+    const uint Key_N = 0x04e;
     const uint Key_T = 0x054;
     const uint Key_t = 0x074;
     const uint Key_Insert = 0xff63;
@@ -206,6 +227,10 @@ class URxvt : Gtk.Socket {
     bool key_press_ctrl_shift(Gdk.EventKey evt) {
         if (evt.keyval == Key_T) {
             this.parent_notebook.new_terminal();
+            return true;
+        }
+        if (evt.keyval == Key_N) {
+            new_notebook();
             return true;
         }
         return false;
