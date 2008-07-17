@@ -1,13 +1,3 @@
-/*
- * TODO
- *
- * open new tab in cwd of current tab
- * tab titles
- * activity monitoring
- * get rid of blinking (notebook black background?)
- * close tab button? (for forceful kill)
- */
-
 using GLib;
 using Gtk;
 using Gdkk;
