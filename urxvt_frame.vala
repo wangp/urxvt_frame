@@ -66,7 +66,7 @@ class UNotebook : Gtk.Notebook {
     }
 
     public void new_terminal() {
-        var rxvt = new URxvt(this);
+        var rxvt = new URxvt();
         var label = new Gtk.Label("rxvt");
         var page = this.append_page(rxvt, label);
         this.set_tab_reorderable(rxvt, true);
@@ -98,10 +98,6 @@ class UNotebook : Gtk.Notebook {
 
 class URxvt : Gtk.Socket {
 
-    URxvt(UNotebook notebook) {
-        this.parent_notebook = notebook; 
-    }
-
     construct {
         this.can_focus = true;
         this.border_width = 0;
@@ -117,9 +113,11 @@ class URxvt : Gtk.Socket {
         this.key_press_event += on_key_press_event;
     }
 
-    public UNotebook parent_notebook {
-        get;
-        construct set;
+    UNotebook parent_notebook {
+        get {
+            // XXX is it possible to sanity check this cast?
+            return (UNotebook) this.parent;
+        }
     }
 
     void on_realize() {
