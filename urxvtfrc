@@ -1,7 +1,12 @@
 [urxvtf]
 
 # How to execute urxvt.
-command = /usr/bin/urxvtc -pe -tabbed
+terminal_command = /usr/bin/urxvtc -pe -tabbed
+
+# The default command to run in the terminal (i.e. the shell).
+# If unset, defaults to the value of the SHELL environment variable,
+# or the shell entry in passwd, or else /bin/sh.
+# default_command = /bin/zsh
 
 # If true, send Shift-Insert when Pause is pressed.
 pause_paste = true

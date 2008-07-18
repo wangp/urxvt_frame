@@ -122,7 +122,8 @@ class URxvt : Gtk.Socket {
 
         // The order of arguments matters.
         var embed = " -embed 0x%lx".printf((ulong) id);
-        var cmd = Options.command + embed + " -e /bin/zsh";
+        var cmd = Options.terminal_command + embed +
+            " -e " + Options.default_command;
 
         try {
             // should use safer routines
