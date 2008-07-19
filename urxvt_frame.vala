@@ -7,6 +7,14 @@ int main(string[] argv) {
         return 1;
     }
 
+    try {
+        Options.parse_command_line_options(argv);
+    }
+    catch (OptionError e) {
+        stdout.printf("%s\n", e.message);
+        return 1;
+    }
+
     Gtk.init(ref argv);
     new_notebook();
     Gtk.main();
@@ -94,7 +102,13 @@ class UNotebook : Gtk.Notebook {
 
 class URxvt : Gtk.Socket {
 
+    static bool first_terminal = true;
+    bool is_first_terminal;
+
     construct {
+        this.is_first_terminal = URxvt.first_terminal;
+        URxvt.first_terminal = false;
+
         this.can_focus = true;
         this.border_width = 0;
 
@@ -122,8 +136,12 @@ class URxvt : Gtk.Socket {
 
         // The order of arguments matters.
         var embed = " -embed 0x%lx".printf((ulong) id);
-        var cmd = Options.terminal_command + embed +
-            " -e " + Options.default_command;
+        var cmd = Options.terminal_command + embed;
+        if (this.is_first_terminal) {
+            cmd += " -e " + Options.first_command().str;
+        } else {
+            cmd += " -e " + Options.default_command.str;
+        }
 
         try {
             // should use safer routines
