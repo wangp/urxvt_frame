@@ -5,4 +5,14 @@ then
     urxvtd -q -o -f
 fi
 
-exec ${0:h}/urxvt_frame "$@"
+PROG=${0:h}/urxvt_frame
+
+if (( $# == 0 ))
+then
+    exec $PROG
+elif [[ $1 == "-e" ]]
+then
+    exec $PROG "$@"
+else
+    exec $PROG -e "$@"
+fi
