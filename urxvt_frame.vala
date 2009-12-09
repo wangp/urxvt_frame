@@ -53,7 +53,7 @@ class UFrame : Gtk.Window {
 class UNotebook : Gtk.Notebook {
 
     construct {
-        this.can_focus = false;
+        this.flags |= WidgetFlags.CAN_FOCUS;
         this.scrollable = true;
         this.page_removed += this.on_page_removed;
 
@@ -86,7 +86,7 @@ class UNotebook : Gtk.Notebook {
         this.set_current_page(page);
     }
 
-    public void next_page() {
+    public void do_next_page() {
         var n = this.get_n_pages();
         var page = this.get_current_page() + 1;
         if (page >= n) {
@@ -95,7 +95,7 @@ class UNotebook : Gtk.Notebook {
         this.set_current_page(page);
     }
 
-    public void select_page(int n) {
+    public void do_select_page(int n) {
         this.set_current_page(n);
     }
 }
@@ -109,7 +109,7 @@ class URxvt : Gtk.Socket {
         this.is_first_terminal = URxvt.first_terminal;
         URxvt.first_terminal = false;
 
-        this.can_focus = true;
+        this.flags |= WidgetFlags.CAN_FOCUS;
         this.border_width = 0;
 
         // Reduce the initial flicker when the terminal starts up.  Of course,
@@ -167,11 +167,13 @@ class URxvt : Gtk.Socket {
                               | Gdk.ModifierType.SHIFT_MASK;
 
     // Hack. I don't know if this is portable.
-    const ushort Hw_Insert = 0x6a;
+    // Update: doesn't seem so.
+    // const ushort Hw_Insert = 0x6a;
+    const ushort Hw_Insert = 0x76;
 
     bool on_key_press_event(URxvt me, Gdk.EventKey evt) {
         // Debugging.
-        if (false) {
+        /*
             stdout.printf(
                 "keyval = %x, hw = %x, state = %x, length = %d, str = %s\n",
                 evt.keyval,
@@ -180,7 +182,7 @@ class URxvt : Gtk.Socket {
                 evt.length,
                 evt.str
             );
-        }
+        */
 
         switch (evt.state) {
             case 0:
@@ -222,7 +224,9 @@ class URxvt : Gtk.Socket {
         evt.send_event = 0;
         evt.time = Gdk.CURRENT_TIME;
 
-        Gtk.main_do_event((Gdk.Event) evt);
+        // Hack. I don't know how to pass Gdk.EventKey as a Gdk.Event to
+        // satisfy the compiler.
+        GtkAux.main_do_event_key(evt);
     }
 
     bool key_press_ctrl_shift(Gdk.EventKey evt) {
@@ -243,7 +247,7 @@ class URxvt : Gtk.Socket {
                 this.parent_notebook.previous_page();
                 return true;
             case Keysyms.Page_Down:
-                this.parent_notebook.next_page();
+                this.parent_notebook.do_next_page();
                 return true;
         }
         return false;
@@ -255,7 +259,7 @@ class URxvt : Gtk.Socket {
                 this.parent_notebook.previous_page();
                 return true;
             case Keysyms.Right:
-                this.parent_notebook.next_page();
+                this.parent_notebook.do_next_page();
                 return true;
             case Keysyms.Down:
                 this.parent_notebook.new_terminal();
@@ -269,11 +273,11 @@ class URxvt : Gtk.Socket {
             evt.keyval <= (uint) Digits._9)
         {
             var n = (int) evt.keyval - (int) Digits._1;
-            this.parent_notebook.select_page(n);
+            this.parent_notebook.do_select_page(n);
             return true;
         }
         if (evt.keyval == Digits._0) {
-            this.parent_notebook.select_page(9);
+            this.parent_notebook.do_select_page(9);
             return true;
         }
         return false;

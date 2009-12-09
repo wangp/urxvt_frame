@@ -83,7 +83,7 @@ namespace Options {
     public void parse_command_line_options(string[] argv)
         throws OptionError
     {
-        var new_argv = handle_command(argv);
+        handle_command(argv);
         // We don't accept any command line arguments other than -e
         // at the moment.
     }
