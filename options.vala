@@ -23,7 +23,7 @@ namespace Options {
             // As for xterm.
             string cmd = Environment.get_variable("SHELL");
             if (cmd == null) {
-                Passwd.Passwd* pw = Passwd.getpwent();
+                Posix.Passwd* pw = Posix.getpwent();
                 cmd = pw->pw_shell;
                 if (cmd == null || cmd == "") {
                     cmd = "/bin/sh";
