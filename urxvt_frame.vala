@@ -37,7 +37,7 @@ class UFrame : Gtk.Window {
         var notebook = new UNotebook();
         this.add(notebook);
 
-        this.destroy += this.on_destroy;
+        this.destroy.connect(this.on_destroy);
 
         all_frames.append(this);
     }
@@ -55,12 +55,12 @@ class UNotebook : Gtk.Notebook {
     construct {
         this.flags &= ~WidgetFlags.CAN_FOCUS;
         this.scrollable = true;
-        this.page_removed += this.on_page_removed;
+        this.page_removed.connect(this.on_page_removed);
 
         this.new_terminal();
     }
 
-    void on_page_removed() {
+    void on_page_removed(Gtk.Widget child, uint page_num) {
         if (this.get_n_pages() == 0) {
             // This can happen in the case of closing the window.
             if (this.parent != null) {
@@ -117,10 +117,10 @@ class URxvt : Gtk.Socket {
         Gdk.Color black = { 0, 0, 0, 0 };
         this.modify_bg(Gtk.StateType.NORMAL, black);
 
-        this.realize += on_realize;
-        this.plug_added += on_plug_added;
-        this.map_event += on_map_event;
-        this.key_press_event += on_key_press_event;
+        this.realize.connect(on_realize);
+        this.plug_added.connect(on_plug_added);
+        this.map_event.connect(on_map_event);
+        this.key_press_event.connect(on_key_press_event);
     }
 
     UNotebook parent_notebook {
@@ -163,15 +163,12 @@ class URxvt : Gtk.Socket {
         return false;
     }
 
-    const uint Mod_Ctrl_Shift = Gdk.ModifierType.CONTROL_MASK
-                              | Gdk.ModifierType.SHIFT_MASK;
-
     // Hack. I don't know if this is portable.
     // Update: doesn't seem so.
     // const ushort Hw_Insert = 0x6a;
     const ushort Hw_Insert = 0x76;
 
-    bool on_key_press_event(URxvt me, Gdk.EventKey evt) {
+    bool on_key_press_event(Gdk.EventKey evt) {
         // Debugging.
         /*
             stdout.printf(
@@ -194,7 +191,7 @@ class URxvt : Gtk.Socket {
                 }
                 return false;
 
-            case Mod_Ctrl_Shift:
+            case Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK:
                 return this.key_press_ctrl_shift(evt);
 
             case Gdk.ModifierType.CONTROL_MASK:

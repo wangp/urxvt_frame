@@ -5,7 +5,7 @@ namespace Options {
     public StringBuilder default_command;
 
     public StringBuilder _first_command;
-    public static weak StringBuilder first_command() {
+    public static unowned StringBuilder first_command() {
         if (_first_command != null) {
             return _first_command;
         } else {
