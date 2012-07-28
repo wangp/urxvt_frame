@@ -53,7 +53,7 @@ class UFrame : Gtk.Window {
 class UNotebook : Gtk.Notebook {
 
     construct {
-        this.flags |= WidgetFlags.CAN_FOCUS;
+        this.flags &= ~WidgetFlags.CAN_FOCUS;
         this.scrollable = true;
         this.page_removed += this.on_page_removed;
 
