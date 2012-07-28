@@ -13,7 +13,7 @@ namespace Options {
         }
     }
 
-    public bool pause_paste = true;
+    public bool pause_paste = false;
 
     void further_init() {
         if (terminal_command == null) {
@@ -43,7 +43,7 @@ namespace Options {
             var keyfile = new KeyFile();
             keyfile.load_from_file(filename, KeyFileFlags.NONE);
 
-            var group = "urxvtf";
+            var group = "urxvt_frame";
             if (keyfile.has_group(group)) {
                 if (keyfile.has_key(group, "terminal_command")) {
                     Options.terminal_command = keyfile.get_string(group,
@@ -76,7 +76,8 @@ namespace Options {
 
     string make_config_filename() {
         var home_dir = Environment.get_home_dir();
-        var filename = Path.build_filename(home_dir, ".urxvtfrc");
+        var filename = Path.build_filename(home_dir,
+            ".config/urxvt_frame/urxvt_frame.conf");
         return filename;
     }
 

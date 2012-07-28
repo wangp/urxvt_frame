@@ -1,0 +1,17 @@
+# This configuration file belongs in ~/.config/urxvt_frame/urxvt_frame.conf
+# The lines beginning with '#' or ';' are treated as comment lines.
+
+[urxvt_frame]
+
+# How to execute urxvt.
+# If you use the urxvtd (urxvt daemon) then set this to `urxvtc`.
+; terminal_command = /usr/bin/urxvt -pe -tabbed
+
+# The default command to run in the terminal (i.e. the shell).
+# If unset, defaults to the value of the SHELL environment variable,
+# or the shell entry in passwd, or else /bin/sh.
+; default_command = /bin/sh
+
+# If true, send Shift-Insert when Pause is pressed.
+; pause_paste = false
+
