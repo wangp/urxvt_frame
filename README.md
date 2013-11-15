@@ -57,6 +57,10 @@ Keys
 * Shift-Left - previous tab
 * Shift-Right - next tab
 * Shift-Down - new tab
+* Ctrl-Shift-Left - reorder tab
+* Ctrl-Shift-Right - reorder tab
+* Ctrl-Shift-PageUp - reorder tab
+* Ctrl-Shift-PageDown - reorder tab
 * Alt-0 .. Alt-9 - go to tab N
 * Pause - synthetic Shift-Insert key
 

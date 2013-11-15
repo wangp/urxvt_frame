@@ -98,6 +98,13 @@ class UNotebook : Gtk.Notebook {
     public void do_select_page(int n) {
         this.set_current_page(n);
     }
+
+    public void shift_page(Gtk.Widget child, int delta) {
+        var page = this.get_current_page() + delta;
+        if (page >= 0 && page < this.get_n_pages()) {
+            this.reorder_child(child, page);
+        }
+    }
 }
 
 class URxvt : Gtk.Socket {
@@ -233,6 +240,14 @@ class URxvt : Gtk.Socket {
                 return true;
             case Keysyms.N:
                 new_notebook();
+                return true;
+            case Keysyms.Left:
+            case Keysyms.Page_Up:
+                this.parent_notebook.shift_page(this, -1);
+                return true;
+            case Keysyms.Right:
+            case Keysyms.Page_Down:
+                this.parent_notebook.shift_page(this, 1);
                 return true;
         }
         return false;
