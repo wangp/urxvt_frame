@@ -52,6 +52,8 @@ class UFrame : Gtk.Window {
 
 class UNotebook : Gtk.Notebook {
 
+    int counter = 0;
+
     construct {
         this.flags &= ~WidgetFlags.CAN_FOCUS;
         this.scrollable = true;
@@ -70,8 +72,9 @@ class UNotebook : Gtk.Notebook {
     }
 
     public void new_terminal() {
+        var n = this.counter++;
         var rxvt = new URxvt();
-        var label = new Gtk.Label("rxvt");
+        var label = new Gtk.Label("rxvt-%d".printf(n));
         var page = this.append_page(rxvt, label);
         this.set_tab_reorderable(rxvt, true);
         rxvt.show_all();
