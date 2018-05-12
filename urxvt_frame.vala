@@ -1,6 +1,5 @@
 using GLib;
 using Gtk;
-using Gdkk;
 
 int main(string[] argv) {
     if (!Options.load_options()) {
@@ -194,7 +193,7 @@ class URxvt : Gtk.Socket {
         switch (evt.state) {
             case 0:
                 if (Options.pause_paste) {
-                    if (evt.keyval == Keysyms.Pause) {
+                    if (evt.keyval == Gdk.Key.Pause) {
                         synth_shift_insert();
                         return true;
                     }
@@ -224,7 +223,7 @@ class URxvt : Gtk.Socket {
         evt.state = Gdk.ModifierType.SHIFT_MASK;
         evt.hardware_keycode = Hw_Insert;
 
-        evt.keyval = Keysyms.Insert;
+        evt.keyval = Gdk.Key.Insert;
         evt.length = 0;
         evt.str = "";
 
@@ -238,18 +237,18 @@ class URxvt : Gtk.Socket {
 
     bool key_press_ctrl_shift(Gdk.EventKey evt) {
         switch (evt.keyval) {
-            case Keysyms.T:
+            case Gdk.Key.T:
                 this.parent_notebook.new_terminal();
                 return true;
-            case Keysyms.N:
+            case Gdk.Key.N:
                 new_notebook();
                 return true;
-            case Keysyms.Left:
-            case Keysyms.Page_Up:
+            case Gdk.Key.Left:
+            case Gdk.Key.Page_Up:
                 this.parent_notebook.shift_page(this, -1);
                 return true;
-            case Keysyms.Right:
-            case Keysyms.Page_Down:
+            case Gdk.Key.Right:
+            case Gdk.Key.Page_Down:
                 this.parent_notebook.shift_page(this, 1);
                 return true;
         }
@@ -258,10 +257,10 @@ class URxvt : Gtk.Socket {
 
     bool key_press_ctrl(Gdk.EventKey evt) {
         switch (evt.keyval) {
-            case Keysyms.Page_Up:
+            case Gdk.Key.Page_Up:
                 this.parent_notebook.previous_page();
                 return true;
-            case Keysyms.Page_Down:
+            case Gdk.Key.Page_Down:
                 this.parent_notebook.do_next_page();
                 return true;
         }
@@ -270,13 +269,13 @@ class URxvt : Gtk.Socket {
 
     bool key_press_shift(Gdk.EventKey evt) {
         switch (evt.keyval) {
-            case Keysyms.Left:
+            case Gdk.Key.Left:
                 this.parent_notebook.previous_page();
                 return true;
-            case Keysyms.Right:
+            case Gdk.Key.Right:
                 this.parent_notebook.do_next_page();
                 return true;
-            case Keysyms.Down:
+            case Gdk.Key.Down:
                 this.parent_notebook.new_terminal();
                 return true;
         }
@@ -284,14 +283,12 @@ class URxvt : Gtk.Socket {
     }
 
     bool key_press_mod1(Gdk.EventKey evt) {
-        if (evt.keyval >= (uint) Digits._1 && 
-            evt.keyval <= (uint) Digits._9)
-        {
-            var n = (int) evt.keyval - (int) Digits._1;
+        if (evt.keyval >= Gdk.Key.@1 && evt.keyval <= Gdk.Key.@9) {
+            var n = (int) evt.keyval - Gdk.Key.@1;
             this.parent_notebook.do_select_page(n);
             return true;
         }
-        if (evt.keyval == Digits._0) {
+        if (evt.keyval == Gdk.Key.@0) {
             this.parent_notebook.do_select_page(9);
             return true;
         }
