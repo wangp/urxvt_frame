@@ -63,9 +63,10 @@ class UNotebook : Gtk.Notebook {
 
     void on_page_removed(Gtk.Widget child, uint page_num) {
         if (this.get_n_pages() == 0) {
-            // This can happen in the case of closing the window.
-            if (this.parent != null) {
-                this.parent.destroy();
+            // p can be null if the whole window is closed.
+            var p = this.get_parent();
+            if (p != null) {
+                p.destroy();
             }
         }
     }
@@ -134,8 +135,7 @@ class URxvt : Gtk.Socket {
 
     UNotebook parent_notebook {
         get {
-            // XXX is it possible to sanity check this cast?
-            return (UNotebook) this.parent;
+            return this.get_parent() as UNotebook;
         }
     }
 

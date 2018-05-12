@@ -31,8 +31,6 @@ With `valac` in your $PATH, run:
 
     make
 
-You will get some compiler warnings.
-
 
 Configuration
 =============
