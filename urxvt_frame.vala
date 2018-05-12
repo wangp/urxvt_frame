@@ -230,9 +230,7 @@ class URxvt : Gtk.Socket {
         evt.send_event = 0;
         evt.time = Gdk.CURRENT_TIME;
 
-        // Hack. I don't know how to pass Gdk.EventKey as a Gdk.Event to
-        // satisfy the compiler.
-        GtkAux.main_do_event_key(evt);
+        Gtk.main_do_event((Gdk.Event) &evt);
     }
 
     bool key_press_ctrl_shift(Gdk.EventKey evt) {
