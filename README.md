@@ -22,6 +22,7 @@ Requirements
 * rxvt-unicode
 * Vala compiler
 * GTK+2
+* pgrep
 
 
 Compiling

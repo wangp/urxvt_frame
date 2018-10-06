@@ -15,13 +15,13 @@ int main(string[] argv) {
     }
 
     Gtk.init(ref argv);
-    new_notebook();
+    new_notebook(null);
     Gtk.main();
     return 0;
 }
 
-void new_notebook() {
-    var window = new UFrame();
+void new_notebook(string? initial_directory) {
+    var window = new UFrame(initial_directory);
     window.set_default_size(700, 400);
     window.show_all();
 }
@@ -30,10 +30,10 @@ class UFrame : Gtk.Window {
 
     static List<UFrame> all_frames;
 
-    construct {
+    public UFrame(string? initial_directory) {
         this.title = "urxvt-frame";
 
-        var notebook = new UNotebook();
+        var notebook = new UNotebook(initial_directory);
         this.add(notebook);
 
         this.destroy.connect(this.on_destroy);
@@ -53,12 +53,12 @@ class UNotebook : Gtk.Notebook {
 
     int counter = 0;
 
-    construct {
+    public UNotebook(string? initial_directory) {
         this.flags &= ~WidgetFlags.CAN_FOCUS;
         this.scrollable = true;
         this.page_removed.connect(this.on_page_removed);
 
-        this.new_terminal();
+        this.new_terminal(initial_directory);
     }
 
     void on_page_removed(Gtk.Widget child, uint page_num) {
@@ -71,9 +71,9 @@ class UNotebook : Gtk.Notebook {
         }
     }
 
-    public void new_terminal() {
+    public void new_terminal(string? initial_directory) {
         var n = this.counter++;
-        var rxvt = new URxvt();
+        var rxvt = new URxvt(initial_directory);
         var label = new Gtk.Label("rxvt-%d".printf(n));
         var page = this.append_page(rxvt, label);
         this.set_tab_reorderable(rxvt, true);
@@ -114,11 +114,14 @@ class URxvt : Gtk.Socket {
 
     static bool first_terminal = true;
     bool is_first_terminal;
+    string? initial_directory;
     Pid terminal_pid;
+    string? shell_pid;  // child of terminal_pid
 
-    construct {
+    public URxvt(string? initial_directory) {
         this.is_first_terminal = URxvt.first_terminal;
         URxvt.first_terminal = false;
+        this.initial_directory = initial_directory;
 
         this.flags |= WidgetFlags.CAN_FOCUS;
         this.border_width = 0;
@@ -158,13 +161,14 @@ class URxvt : Gtk.Socket {
         }
 
         try {
-            Process.spawn_async(null, argv, null, SpawnFlags.SEARCH_PATH,
-                null, out terminal_pid);
+            Process.spawn_async(initial_directory, argv, null,
+                SpawnFlags.SEARCH_PATH, null, out terminal_pid);
         }
         catch (SpawnError e) {
-            stderr.printf("Error running `%s'.\n",
-                string.joinv(" ", (string?[]) argv));
+            stderr.printf("Error running `%s': %s\n",
+                string.joinv(" ", (string?[]) argv), e.message);
         }
+
     }
 
     void on_plug_added() {
@@ -242,13 +246,14 @@ class URxvt : Gtk.Socket {
     bool key_press_ctrl_shift(Gdk.EventKey evt) {
         switch (evt.keyval) {
             case Gdk.Key.T:
+                var cwd = get_cwd_of_shell();
                 var p = this.parent_notebook;
                 if (p != null) {
-                    ((!) p).new_terminal();
+                    ((!) p).new_terminal(cwd);
                 }
                 return true;
             case Gdk.Key.N:
-                new_notebook();
+                new_notebook(get_cwd_of_shell());
                 return true;
             case Gdk.Key.Left:
             case Gdk.Key.Page_Up:
@@ -303,7 +308,7 @@ class URxvt : Gtk.Socket {
             case Gdk.Key.Down:
                 var p = this.parent_notebook;
                 if (p != null) {
-                    ((!) p).new_terminal();
+                    ((!) p).new_terminal(get_cwd_of_shell());
                 }
                 return true;
         }
@@ -327,6 +332,38 @@ class URxvt : Gtk.Socket {
             return true;
         }
         return false;
+    }
+
+    string? get_cwd_of_shell() {
+        if (shell_pid == null) {
+            shell_pid = get_pid_of_shell();
+            if (shell_pid == null) {
+                return null;
+            }
+        }
+        try {
+            var pid = (!) shell_pid;
+            // Linux-specific:
+            return FileUtils.read_link(@"/proc/$pid/cwd");
+        }
+        catch (FileError e) {
+            stderr.printf("Error getting cwd: %s\n", e.message);
+            return null;
+        }
+    }
+
+    string? get_pid_of_shell() {
+        try {
+            string[] argv = {"pgrep", "-P", terminal_pid.to_string(), "-n"};
+            string stdout;
+            Process.spawn_sync(null, argv, null, SpawnFlags.SEARCH_PATH, null,
+                out stdout, null, null);
+            return stdout.chomp(); // generates C compiler warning
+        }
+        catch (SpawnError e) {
+            stderr.printf("Error calling pgrep: %s\n", e.message);
+            return null;
+        }
     }
 }
 
