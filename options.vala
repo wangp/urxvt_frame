@@ -1,11 +1,12 @@
+// Probably better as a class.
 namespace Options {
 
-    public string terminal_command;
+    public string[] terminal_command;
 
-    public StringBuilder default_command;
+    public string[] default_command;
 
-    public StringBuilder _first_command;
-    public static unowned StringBuilder first_command() {
+    private string[] _first_command;
+    public static string[] first_command() {
         if (_first_command != null) {
             return _first_command;
         } else {
@@ -17,7 +18,7 @@ namespace Options {
 
     void further_init() {
         if (terminal_command == null) {
-            terminal_command = "/usr/bin/urxvt -pe -tabbed";
+            terminal_command = {"/usr/bin/urxvt", "-pe", "-tabbed"};
         }
         if (default_command == null) {
             // As for xterm.
@@ -29,7 +30,7 @@ namespace Options {
                     cmd = "/bin/sh";
                 }
             }
-            Options.default_command = new StringBuilder(cmd);
+            Options.default_command = {cmd};
         }
     }
 
@@ -46,16 +47,18 @@ namespace Options {
             var group = "urxvt_frame";
             if (keyfile.has_group(group)) {
                 if (keyfile.has_key(group, "terminal_command")) {
-                    Options.terminal_command = keyfile.get_string(group,
-                        "terminal_command");
+                    var v = keyfile.get_string(group, "terminal_command");
+                    // Might want sh-style word splitting.
+                    Options.terminal_command = v.split(" ");
                 }
                 if (keyfile.has_key(group, "default_command")) {
-                    Options.default_command.assign(
-                        keyfile.get_string(group, "default_command"));
+                    var v = keyfile.get_string(group, "default_command");
+                    // Might want sh-style word splitting.
+                    Options.default_command = v.split(" ");
                 }
                 if (keyfile.has_key(group, "pause_paste")) {
-                    Options.pause_paste = keyfile.get_boolean(group,
-                        "pause_paste");
+                    Options.pause_paste =
+                        keyfile.get_boolean(group, "pause_paste");
                 }
             }
 
@@ -84,14 +87,8 @@ namespace Options {
     public void parse_command_line_options(string[] argv)
         throws OptionError
     {
-        handle_command(argv);
         // We don't accept any command line arguments other than -e
         // at the moment.
-    }
-
-    string[] handle_command(string[] argv)
-        throws OptionError
-    {
         for (int i = 1; i < argv.length; i++) {
             if (argv[i] == "-e") {
                 if (i == argv.length - 1) {
@@ -99,26 +96,14 @@ namespace Options {
                         "option '-e' requires an argument");
                 }
 
-                Options._first_command = new StringBuilder(argv[i + 1]);
+                Options._first_command = { argv[i + 1] };
                 for (int j = i + 2; j < argv.length; j++) {
-                    Options._first_command.append(" ");
-                    Options._first_command.append(argv[j]);
+                    Options._first_command += argv[j];
                 }
 
-                return copy_slice(argv, 0, i);
+                return;
             }
         }
-
-        // XXX must we copy the spine?
-        return copy_slice(argv, 0, argv.length);
-    }
-
-    string[] copy_slice(string[] a, int start, int length) {
-        var b = new string[length];
-        for (int i = 0; i < length; i++) {
-            b[i] = a[start + i];
-        }
-        return b;
     }
 }
 

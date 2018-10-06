@@ -114,6 +114,7 @@ class URxvt : Gtk.Socket {
 
     static bool first_terminal = true;
     bool is_first_terminal;
+    Pid terminal_pid;
 
     construct {
         this.is_first_terminal = URxvt.first_terminal;
@@ -143,21 +144,26 @@ class URxvt : Gtk.Socket {
         // XXX this shouldn't be a pointer
         weak Gdk.NativeWindow id = this.get_id();
 
-        // The order of arguments matters.
-        var embed = " -embed 0x%lx".printf((ulong) id);
-        var cmd = Options.terminal_command + embed;
+        string[] argv = Options.terminal_command;
+        argv += "-embed";
+        argv += "0x%lx".printf((ulong) id);
+        argv += "-e";
         if (this.is_first_terminal) {
-            cmd += " -e " + Options.first_command().str;
+            foreach (var arg in Options.first_command()) {
+                argv += arg;
+            }
         } else {
-            cmd += " -e " + Options.default_command.str;
+            foreach (var arg in Options.default_command) {
+                argv += arg;
+            }
         }
 
         try {
-            // should use safer routines
-            Process.spawn_command_line_async(cmd);
+            Process.spawn_async(null, argv, null, SpawnFlags.SEARCH_PATH,
+                null, out terminal_pid);
         }
         catch (SpawnError e) {
-            stderr.printf("Error running `%s'.\n", cmd);
+            stderr.printf("Error running `%s'.\n", string.joinv(" ", argv));
         }
     }
 
