@@ -66,7 +66,7 @@ class UNotebook : Gtk.Notebook {
             // p can be null if the whole window is closed.
             var p = this.get_parent();
             if (p != null) {
-                p.destroy();
+                ((!) p).destroy();
             }
         }
     }
@@ -134,7 +134,7 @@ class URxvt : Gtk.Socket {
         this.key_press_event.connect(on_key_press_event);
     }
 
-    UNotebook parent_notebook {
+    UNotebook? parent_notebook {
         get {
             return this.get_parent() as UNotebook;
         }
@@ -163,7 +163,8 @@ class URxvt : Gtk.Socket {
                 null, out terminal_pid);
         }
         catch (SpawnError e) {
-            stderr.printf("Error running `%s'.\n", string.joinv(" ", argv));
+            stderr.printf("Error running `%s'.\n",
+                string.joinv(" ", (string?[]) argv));
         }
     }
 
@@ -242,18 +243,27 @@ class URxvt : Gtk.Socket {
     bool key_press_ctrl_shift(Gdk.EventKey evt) {
         switch (evt.keyval) {
             case Gdk.Key.T:
-                this.parent_notebook.new_terminal();
+                var p = this.parent_notebook;
+                if (p != null) {
+                    ((!) p).new_terminal();
+                }
                 return true;
             case Gdk.Key.N:
                 new_notebook();
                 return true;
             case Gdk.Key.Left:
             case Gdk.Key.Page_Up:
-                this.parent_notebook.shift_page(this, -1);
+                var p = this.parent_notebook;
+                if (p != null) {
+                    ((!) p).shift_page(this, -1);
+                }
                 return true;
             case Gdk.Key.Right:
             case Gdk.Key.Page_Down:
-                this.parent_notebook.shift_page(this, 1);
+                var p = this.parent_notebook;
+                if (p != null) {
+                    ((!) p).shift_page(this, 1);
+                }
                 return true;
         }
         return false;
@@ -262,10 +272,16 @@ class URxvt : Gtk.Socket {
     bool key_press_ctrl(Gdk.EventKey evt) {
         switch (evt.keyval) {
             case Gdk.Key.Page_Up:
-                this.parent_notebook.previous_page();
+                var p = this.parent_notebook;
+                if (p != null) {
+                    ((!) p).previous_page();
+                }
                 return true;
             case Gdk.Key.Page_Down:
-                this.parent_notebook.do_next_page();
+                var p = this.parent_notebook;
+                if (p != null) {
+                    ((!) p).do_next_page();
+                }
                 return true;
         }
         return false;
@@ -274,13 +290,22 @@ class URxvt : Gtk.Socket {
     bool key_press_shift(Gdk.EventKey evt) {
         switch (evt.keyval) {
             case Gdk.Key.Left:
-                this.parent_notebook.previous_page();
+                var p = this.parent_notebook;
+                if (p != null) {
+                    ((!) p).previous_page();
+                }
                 return true;
             case Gdk.Key.Right:
-                this.parent_notebook.do_next_page();
+                var p = this.parent_notebook;
+                if (p != null) {
+                    ((!) p).do_next_page();
+                }
                 return true;
             case Gdk.Key.Down:
-                this.parent_notebook.new_terminal();
+                var p = this.parent_notebook;
+                if (p != null) {
+                    ((!) p).new_terminal();
+                }
                 return true;
         }
         return false;
@@ -289,11 +314,17 @@ class URxvt : Gtk.Socket {
     bool key_press_mod1(Gdk.EventKey evt) {
         if (evt.keyval >= Gdk.Key.@1 && evt.keyval <= Gdk.Key.@9) {
             var n = (int) evt.keyval - Gdk.Key.@1;
-            this.parent_notebook.do_select_page(n);
+            var p = this.parent_notebook;
+            if (p != null) {
+                ((!) p).do_select_page(n);
+            }
             return true;
         }
         if (evt.keyval == Gdk.Key.@0) {
-            this.parent_notebook.do_select_page(9);
+            var p = this.parent_notebook;
+            if (p != null) {
+                ((!) p).do_select_page(9);
+            }
             return true;
         }
         return false;

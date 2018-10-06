@@ -1,11 +1,11 @@
 // Probably better as a class.
 namespace Options {
 
-    public string[] terminal_command;
+    public string[]? terminal_command;
 
-    public string[] default_command;
+    public string[]? default_command;
 
-    private string[] _first_command;
+    private string[]? _first_command;
     public static string[] first_command() {
         if (_first_command != null) {
             return _first_command;
@@ -22,15 +22,16 @@ namespace Options {
         }
         if (default_command == null) {
             // As for xterm.
-            string cmd = Environment.get_variable("SHELL");
-            if (cmd == null) {
+            string? shell = Environment.get_variable("SHELL");
+            if (shell == null) {
                 Posix.Passwd* pw = Posix.getpwent();
-                cmd = pw->pw_shell;
-                if (cmd == null || cmd == "") {
-                    cmd = "/bin/sh";
-                }
+                shell = pw->pw_shell;
             }
-            Options.default_command = {cmd};
+            if (shell != null && shell != "") {
+                Options.default_command = {(!) shell};
+            } else {
+                Options.default_command = {"/bin/sh"};
+            }
         }
     }
 
