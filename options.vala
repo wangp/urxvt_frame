@@ -28,9 +28,10 @@ class Options {
     public Options() {
         string? shell = Environment.get_variable("SHELL");
         if (shell == null) {
-            // XXX wrong
-            Posix.Passwd* pw = Posix.getpwent();
-            shell = pw->pw_shell;
+            Posix.Passwd* pw = Posix.getpwuid(Posix.getuid());
+            if (pw != null) {
+                shell = pw->pw_shell;
+            }
         }
         if (shell != null && shell != "") {
             default_command = {(!) shell};
