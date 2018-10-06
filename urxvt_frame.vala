@@ -2,12 +2,14 @@ using GLib;
 using Gtk;
 
 int main(string[] argv) {
-    if (!Options.load_options()) {
-        return 1;
-    }
-
+    Options options = new Options();
     try {
-        Options.parse_command_line_options(argv);
+        options.load_options();
+        options.parse_command_line_options(argv);
+    }
+    catch (KeyFileError e) {
+        stdout.printf("%s\n", e.message);
+        return 1;
     }
     catch (OptionError e) {
         stdout.printf("%s\n", e.message);
@@ -15,13 +17,13 @@ int main(string[] argv) {
     }
 
     Gtk.init(ref argv);
-    new_notebook(null);
+    new_notebook(options, null);
     Gtk.main();
     return 0;
 }
 
-void new_notebook(string? initial_directory) {
-    var window = new UFrame(initial_directory);
+void new_notebook(Options options, string? initial_directory) {
+    var window = new UFrame(options, initial_directory);
     window.set_default_size(700, 400);
     window.show_all();
 }
@@ -30,10 +32,10 @@ class UFrame : Gtk.Window {
 
     static List<UFrame> all_frames;
 
-    public UFrame(string? initial_directory) {
+    public UFrame(Options options, string? initial_directory) {
         this.title = "urxvt-frame";
 
-        var notebook = new UNotebook(initial_directory);
+        var notebook = new UNotebook(options, initial_directory);
         this.add(notebook);
 
         this.destroy.connect(this.on_destroy);
@@ -53,12 +55,12 @@ class UNotebook : Gtk.Notebook {
 
     int counter = 0;
 
-    public UNotebook(string? initial_directory) {
+    public UNotebook(Options options, string? initial_directory) {
         this.flags &= ~WidgetFlags.CAN_FOCUS;
         this.scrollable = true;
         this.page_removed.connect(this.on_page_removed);
 
-        this.new_terminal(initial_directory);
+        this.new_terminal(options, initial_directory);
     }
 
     void on_page_removed(Gtk.Widget child, uint page_num) {
@@ -71,9 +73,9 @@ class UNotebook : Gtk.Notebook {
         }
     }
 
-    public void new_terminal(string? initial_directory) {
+    public void new_terminal(Options options, string? initial_directory) {
         var n = this.counter++;
-        var rxvt = new URxvt(initial_directory);
+        var rxvt = new URxvt(options, initial_directory);
         var label = new Gtk.Label("rxvt-%d".printf(n));
         var page = this.append_page(rxvt, label);
         this.set_tab_reorderable(rxvt, true);
@@ -114,13 +116,16 @@ class URxvt : Gtk.Socket {
 
     static bool first_terminal = true;
     bool is_first_terminal;
+    Options options;
     string? initial_directory;
     Pid terminal_pid;
     string? shell_pid;  // child of terminal_pid
 
-    public URxvt(string? initial_directory) {
+    public URxvt(Options options, string? initial_directory) {
         this.is_first_terminal = URxvt.first_terminal;
         URxvt.first_terminal = false;
+
+        this.options = options;
         this.initial_directory = initial_directory;
 
         this.flags |= WidgetFlags.CAN_FOCUS;
@@ -146,16 +151,16 @@ class URxvt : Gtk.Socket {
     void on_realize() {
         Gdk.NativeWindow id = this.get_id();
 
-        string[] argv = Options.terminal_command;
+        string[] argv = options.terminal_command;
         argv += "-embed";
         argv += "0x%lx".printf((ulong) id);
         argv += "-e";
         if (this.is_first_terminal) {
-            foreach (var arg in Options.first_command()) {
+            foreach (var arg in options.first_command) {
                 argv += arg;
             }
         } else {
-            foreach (var arg in Options.default_command) {
+            foreach (var arg in options.default_command) {
                 argv += arg;
             }
         }
@@ -202,7 +207,7 @@ class URxvt : Gtk.Socket {
 
         switch (evt.state) {
             case 0:
-                if (Options.pause_paste) {
+                if (options.pause_paste) {
                     if (evt.keyval == Gdk.Key.Pause) {
                         synth_shift_insert();
                         return true;
@@ -249,11 +254,11 @@ class URxvt : Gtk.Socket {
                 var cwd = get_cwd_of_shell();
                 var p = this.parent_notebook;
                 if (p != null) {
-                    ((!) p).new_terminal(cwd);
+                    ((!) p).new_terminal(options, cwd);
                 }
                 return true;
             case Gdk.Key.N:
-                new_notebook(get_cwd_of_shell());
+                new_notebook(options, get_cwd_of_shell());
                 return true;
             case Gdk.Key.Left:
             case Gdk.Key.Page_Up:
@@ -308,7 +313,7 @@ class URxvt : Gtk.Socket {
             case Gdk.Key.Down:
                 var p = this.parent_notebook;
                 if (p != null) {
-                    ((!) p).new_terminal(get_cwd_of_shell());
+                    ((!) p).new_terminal(options, get_cwd_of_shell());
                 }
                 return true;
         }

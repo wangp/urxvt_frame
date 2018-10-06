@@ -1,81 +1,69 @@
-// Probably better as a class.
-namespace Options {
+class Options {
 
-    public string[]? terminal_command;
+    public string[] terminal_command {
+        get;
+        private set;
+        default = {"/usr/bin/urxvt", "-pe", "-tabbed"};
+    }
 
-    public string[]? default_command;
+    public string[] default_command {
+        get;
+        private set;
+        default = {"/bin/sh"};
+    }
 
-    private string[]? _first_command;
-    public static string[] first_command() {
-        if (_first_command != null) {
-            return _first_command;
-        } else {
-            return default_command;
+    string[]? _first_command;
+    public string[] first_command {
+        get {
+            return (_first_command != null) ? _first_command : default_command;
         }
     }
 
-    public bool pause_paste = false;
+    public bool pause_paste {
+        get;
+        private set;
+        default = false;
+    }
 
-    void further_init() {
-        if (terminal_command == null) {
-            terminal_command = {"/usr/bin/urxvt", "-pe", "-tabbed"};
+    public Options() {
+        string? shell = Environment.get_variable("SHELL");
+        if (shell == null) {
+            // XXX wrong
+            Posix.Passwd* pw = Posix.getpwent();
+            shell = pw->pw_shell;
         }
-        if (default_command == null) {
-            // As for xterm.
-            string? shell = Environment.get_variable("SHELL");
-            if (shell == null) {
-                Posix.Passwd* pw = Posix.getpwent();
-                shell = pw->pw_shell;
-            }
-            if (shell != null && shell != "") {
-                Options.default_command = {(!) shell};
-            } else {
-                Options.default_command = {"/bin/sh"};
-            }
+        if (shell != null && shell != "") {
+            default_command = {(!) shell};
         }
     }
 
-    public bool load_options() {
-        further_init();
-
-        bool success = true;
-
+    public void load_options()
+        throws KeyFileError
+    {
+        var filename = make_config_filename();
+        var keyfile = new KeyFile();
         try {
-            var filename = make_config_filename();
-            var keyfile = new KeyFile();
             keyfile.load_from_file(filename, KeyFileFlags.NONE);
-
-            var group = "urxvt_frame";
-            if (keyfile.has_group(group)) {
-                if (keyfile.has_key(group, "terminal_command")) {
-                    var v = keyfile.get_string(group, "terminal_command");
-                    // Might want sh-style word splitting.
-                    Options.terminal_command = v.split(" ");
-                }
-                if (keyfile.has_key(group, "default_command")) {
-                    var v = keyfile.get_string(group, "default_command");
-                    // Might want sh-style word splitting.
-                    Options.default_command = v.split(" ");
-                }
-                if (keyfile.has_key(group, "pause_paste")) {
-                    Options.pause_paste =
-                        keyfile.get_boolean(group, "pause_paste");
-                }
-            }
-
-            // XXX there seems to be a memory leak of keyfile here
         }
         catch (FileError e) {
             // Probably doesn't exist.
-        }
-        catch (KeyFileError e) {
-            // Bad syntax.
-            // XXX report the error
-            stderr.printf("Error parsing configuration file.\n");
-            success = false;
+            return;
         }
 
-        return success;
+        var group = "urxvt_frame";
+        if (keyfile.has_key(group, "terminal_command")) {
+            var v = keyfile.get_string(group, "terminal_command");
+            // Might want sh-style word splitting.
+            terminal_command = v.split(" ");
+        }
+        if (keyfile.has_key(group, "default_command")) {
+            var v = keyfile.get_string(group, "default_command");
+            // Might want sh-style word splitting.
+            default_command = v.split(" ");
+        }
+        if (keyfile.has_key(group, "pause_paste")) {
+            pause_paste = keyfile.get_boolean(group, "pause_paste");
+        }
     }
 
     string make_config_filename() {
@@ -96,12 +84,7 @@ namespace Options {
                     throw new OptionError.BAD_VALUE(
                         "option '-e' requires an argument");
                 }
-
-                Options._first_command = { argv[i + 1] };
-                for (int j = i + 2; j < argv.length; j++) {
-                    Options._first_command += argv[j];
-                }
-
+                _first_command = argv[i + 1 : argv.length];
                 return;
             }
         }
