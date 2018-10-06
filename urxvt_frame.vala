@@ -141,8 +141,7 @@ class URxvt : Gtk.Socket {
     }
 
     void on_realize() {
-        // XXX this shouldn't be a pointer
-        weak Gdk.NativeWindow id = this.get_id();
+        Gdk.NativeWindow id = this.get_id();
 
         string[] argv = Options.terminal_command;
         argv += "-embed";
