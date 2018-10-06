@@ -39,7 +39,7 @@ class Options {
     }
 
     public void load_options()
-        throws KeyFileError
+        throws KeyFileError, ShellError
     {
         var filename = make_config_filename();
         var keyfile = new KeyFile();
@@ -54,13 +54,17 @@ class Options {
         var group = "urxvt_frame";
         if (keyfile.has_key(group, "terminal_command")) {
             var v = keyfile.get_string(group, "terminal_command");
-            // Might want sh-style word splitting.
-            terminal_command = v.split(" ");
+            string[]? argv = null;
+            if (Shell.parse_argv(v, out argv)) {
+                terminal_command = argv;
+            }
         }
         if (keyfile.has_key(group, "default_command")) {
             var v = keyfile.get_string(group, "default_command");
-            // Might want sh-style word splitting.
-            default_command = v.split(" ");
+            string[]? argv = null;
+            if (Shell.parse_argv(v, out argv)) {
+                default_command = argv;
+            }
         }
         if (keyfile.has_key(group, "pause_paste")) {
             pause_paste = keyfile.get_boolean(group, "pause_paste");

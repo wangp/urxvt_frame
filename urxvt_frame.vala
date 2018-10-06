@@ -11,6 +11,10 @@ int main(string[] argv) {
         stdout.printf("%s\n", e.message);
         return 1;
     }
+    catch (ShellError e) {
+        stdout.printf("%s\n", e.message);
+        return 1;
+    }
     catch (OptionError e) {
         stdout.printf("%s\n", e.message);
         return 1;
