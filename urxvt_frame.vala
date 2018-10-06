@@ -21,35 +21,30 @@ int main(string[] argv) {
     }
 
     Gtk.init(ref argv);
-    new_notebook(options, null);
+    new UWindow(options, null);
     Gtk.main();
     return 0;
 }
 
-void new_notebook(Options options, string? initial_directory) {
-    var window = new UFrame(options, initial_directory);
-    window.set_default_size(700, 400);
-    window.show_all();
-}
+class UWindow : Gtk.Window {
 
-class UFrame : Gtk.Window {
+    static List<UWindow> all_windows;
 
-    static List<UFrame> all_frames;
+    public UWindow(Options options, string? initial_directory) {
+        all_windows.append(this);
 
-    public UFrame(Options options, string? initial_directory) {
         this.title = "urxvt-frame";
+        this.set_default_size(700, 400);
+        this.destroy.connect(this.on_destroy);
 
         var notebook = new UNotebook(options, initial_directory);
         this.add(notebook);
-
-        this.destroy.connect(this.on_destroy);
-
-        all_frames.append(this);
+        this.show_all();
     }
 
     void on_destroy() {
-        all_frames.remove(this);
-        if (all_frames.length() == 0) {
+        all_windows.remove(this);
+        if (all_windows.length() == 0) {
             Gtk.main_quit();
         }
     }
@@ -79,7 +74,8 @@ class UNotebook : Gtk.Notebook {
 
     public void new_terminal(Options options, string? initial_directory) {
         var n = this.counter++;
-        var rxvt = new URxvt(options, initial_directory);
+        var first_terminal = (n == 0);
+        var rxvt = new URxvt(options, initial_directory, first_terminal);
         var label = new Gtk.Label("rxvt-%d".printf(n));
         var page = this.append_page(rxvt, label);
         this.set_tab_reorderable(rxvt, true);
@@ -108,7 +104,7 @@ class UNotebook : Gtk.Notebook {
         this.set_current_page(n);
     }
 
-    public void shift_page(Gtk.Widget child, int delta) {
+    public void reorder_page(Gtk.Widget child, int delta) {
         var page = this.get_current_page() + delta;
         if (page >= 0 && page < this.get_n_pages()) {
             this.reorder_child(child, page);
@@ -118,19 +114,16 @@ class UNotebook : Gtk.Notebook {
 
 class URxvt : Gtk.Socket {
 
-    static bool first_terminal = true;
-    bool is_first_terminal;
     Options options;
     string? initial_directory;
+    bool first_terminal;
     Pid terminal_pid;
     string? shell_pid;  // child of terminal_pid
 
-    public URxvt(Options options, string? initial_directory) {
-        this.is_first_terminal = URxvt.first_terminal;
-        URxvt.first_terminal = false;
-
+    public URxvt(Options options, string? initial_directory, bool first_terminal) {
         this.options = options;
         this.initial_directory = initial_directory;
+        this.first_terminal = first_terminal;
 
         this.flags |= WidgetFlags.CAN_FOCUS;
         this.border_width = 0;
@@ -159,7 +152,7 @@ class URxvt : Gtk.Socket {
         argv += "-embed";
         argv += "0x%lx".printf((ulong) id);
         argv += "-e";
-        if (this.is_first_terminal) {
+        if (this.first_terminal) {
             foreach (var arg in options.first_command) {
                 argv += arg;
             }
@@ -177,15 +170,12 @@ class URxvt : Gtk.Socket {
             stderr.printf("Error running `%s': %s\n",
                 string.joinv(" ", (string?[]) argv), e.message);
         }
-
     }
 
     void on_plug_added() {
-        // stdout.printf("plug_added\n");
     }
 
     bool on_map_event() {
-        // stdout.printf("map_event\n");
         // Will be called when the tab is switched-to.
         this.grab_focus();
         return false;
@@ -262,20 +252,20 @@ class URxvt : Gtk.Socket {
                 }
                 return true;
             case Gdk.Key.N:
-                new_notebook(options, get_cwd_of_shell());
+                new UWindow(options, get_cwd_of_shell());
                 return true;
             case Gdk.Key.Left:
             case Gdk.Key.Page_Up:
                 var p = this.parent_notebook;
                 if (p != null) {
-                    ((!) p).shift_page(this, -1);
+                    ((!) p).reorder_page(this, -1);
                 }
                 return true;
             case Gdk.Key.Right:
             case Gdk.Key.Page_Down:
                 var p = this.parent_notebook;
                 if (p != null) {
-                    ((!) p).shift_page(this, 1);
+                    ((!) p).reorder_page(this, 1);
                 }
                 return true;
         }
@@ -325,18 +315,12 @@ class URxvt : Gtk.Socket {
     }
 
     bool key_press_mod1(Gdk.EventKey evt) {
-        if (evt.keyval >= Gdk.Key.@1 && evt.keyval <= Gdk.Key.@9) {
-            var n = (int) evt.keyval - Gdk.Key.@1;
+        if (evt.keyval >= Gdk.Key.@0 && evt.keyval <= Gdk.Key.@9) {
+            int n = (int) evt.keyval - Gdk.Key.@0;
+            int page = (n + 9) % 10;
             var p = this.parent_notebook;
             if (p != null) {
-                ((!) p).do_select_page(n);
-            }
-            return true;
-        }
-        if (evt.keyval == Gdk.Key.@0) {
-            var p = this.parent_notebook;
-            if (p != null) {
-                ((!) p).do_select_page(9);
+                ((!) p).do_select_page(page);
             }
             return true;
         }
