@@ -37,6 +37,16 @@ class UWindow : Gtk.Window {
         this.set_default_size(700, 400);
         this.destroy.connect(this.on_destroy);
 
+        try {
+            var theme = IconTheme.get_default();
+            var icon = theme.load_icon("utilities-terminal", 48, 0);
+            if (icon != null) {
+                this.icon = (!) icon;
+            }
+        } catch (Error e) {
+            // stderr.printf("Could not load application icon: %s\n", e.message);
+        }
+
         var notebook = new UNotebook(options, initial_directory);
         this.add(notebook);
         this.show_all();
