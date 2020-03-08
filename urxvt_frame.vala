@@ -34,7 +34,11 @@ class UWindow : Gtk.Window {
         all_windows.append(this);
 
         this.title = "urxvt-frame";
-        this.set_default_size(700, 400);
+        if (use_larger_window()) {
+            this.set_default_size(1400, 800);
+        } else {
+            this.set_default_size(700, 400);
+        }
         this.destroy.connect(this.on_destroy);
 
         try {
@@ -57,6 +61,11 @@ class UWindow : Gtk.Window {
         if (all_windows.length() == 0) {
             Gtk.main_quit();
         }
+    }
+
+    bool use_larger_window() {
+        Gdk.Screen screen = this.get_display().get_default_screen();
+        return screen.get_height() > 1080;
     }
 }
 
